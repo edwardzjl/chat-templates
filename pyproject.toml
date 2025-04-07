@@ -1,0 +1,16 @@
+[project]
+name = "chat-templates"
+version = "0.1.0.dev"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pillow",
+    "transformers",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit",
+    "ruff",
+]
