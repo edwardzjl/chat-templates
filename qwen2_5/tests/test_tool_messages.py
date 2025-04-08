@@ -1,6 +1,12 @@
 import unittest
+from importlib import resources
 
 from transformers import AutoTokenizer
+
+
+template_file = resources.files(__package__.split(".")[0]).joinpath(
+    "chat_template.jinja"
+)
 
 
 class TestToolMessages(unittest.TestCase):
@@ -20,7 +26,7 @@ class TestToolMessages(unittest.TestCase):
         ]
         expected = self.tokenizer.apply_chat_template(messages, tokenize=False)
 
-        with open("./chat_template.jinja") as f:
+        with template_file.open("r", encoding="utf-8") as f:
             self.tokenizer.chat_template = f.read()
         actual = self.tokenizer.apply_chat_template(messages, tokenize=False)
 
@@ -43,7 +49,7 @@ class TestToolMessages(unittest.TestCase):
         ]
         expected = self.tokenizer.apply_chat_template(messages, tokenize=False)
 
-        with open("./chat_template.jinja") as f:
+        with template_file.open("r", encoding="utf-8") as f:
             self.tokenizer.chat_template = f.read()
         actual = self.tokenizer.apply_chat_template(messages, tokenize=False)
 
