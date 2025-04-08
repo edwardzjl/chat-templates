@@ -6,7 +6,7 @@ format:
 	uv run ruff check --fix
 	uv run ruff format
 test:
-	uv run python -m unittest discover -s qwen2.5
+	uv run python -m unittest
 
 ######################
 # HELP
