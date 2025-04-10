@@ -6,14 +6,14 @@ on:
         - main
       paths:
         - '.github/workflows/ci.yml'
-        - 'qwen2.5/**'
+        - 'qwen2_5/**'
     pull_request:
       types:
         - opened
         - synchronize
       paths:
         - '.github/workflows/ci.yml'
-        - 'qwen2.5/**'
+        - 'qwen2_5/**'
     workflow_dispatch:  # Allows to trigger the workflow manually in GitHub UI
 
 jobs:
