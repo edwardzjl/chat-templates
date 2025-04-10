@@ -48,6 +48,24 @@ class TestSystemMessages(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+    # Qwen's chat template does not support structured system message.
+    def test_openai_content(self):
+        messages = [
+            {
+                "role": "system",
+                "content": [{"type": "text", "text": "You are Qwen."}],
+            },
+        ]
+        expected = """<|im_start|>system
+You are Qwen.<|im_end|>
+"""
+
+        with template_file.open("r", encoding="utf-8") as f:
+            self.tokenizer.chat_template = f.read()
+        actual = self.tokenizer.apply_chat_template(messages, tokenize=False)
+
+        self.assertEqual(actual, expected)
+
     def test_render_tools(self):
         def get_current_temperature(location: str, unit: str) -> float:
             """Get the current temperature at a location.
