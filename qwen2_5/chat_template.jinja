@@ -33,52 +33,59 @@
 {%- endif -%}
 {{ '<|im_end|>\n' }}
 {%- for message in messages -%}
+    {# Skip the first system message as it was already rendered. #}
+    {%- if loop.first and message.role == 'system' %}{% continue %}{% endif -%}
+
     {# Render tool messages. The logic is slightly different with other messages. #}
     {%- if message['role'] == 'tool' -%}
         {%- if loop.first or messages[loop.index0 - 1]['role'] != 'tool' -%}
             {{ '<|im_start|>user' }}
         {%- endif -%}
-        {{ '\n<tool_response>\n' ~ message['content'] ~ '\n</tool_response>'}}
+        {{ '\n<tool_response>\n' }}
+    {%- else -%}
+        {{ '<|im_start|>' ~ message['role'] ~ '\n' }}
+    {%- endif -%}
+
+    {%- if message['content'] is string -%}
+        {{ message['content'] }}
+    {%- else -%}
+        {%- for content in message['content'] -%}
+            {%- if content['type'] == 'image' or 'image' in content or 'image_url' in content -%}
+                {%- set image_count.value = image_count.value + 1 -%}
+                {%- if add_vision_id -%}
+                    {{ 'Picture ' ~ image_count.value ~ ': ' }}
+                {%- endif -%}
+                {{ '<|vision_start|><|image_pad|><|vision_end|>' }}
+            {%- elif content['type'] == 'video' or 'video' in content -%}
+                {%- set video_count.value = video_count.value + 1 -%}
+                {%- if add_vision_id -%}
+                    {{ 'Video ' ~ video_count.value ~ ': ' }}
+                {%- endif -%}
+                {{ '<|vision_start|><|video_pad|><|vision_end|>' }}
+            {%- elif 'text' in content -%}
+                {{ content['text'] }}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+    {# Render tool_calls in AI messages. #}
+    {%- if message['role'] == 'assistant' and 'tool_calls' in message -%}
+        {# It will be cleaner if I can use some map function and join them with '\n' #}
+        {%- for tool_call in message['tool_calls'] -%}
+            {%- if tool_call['function'] is defined -%}
+                {%- set tool_call = tool_call['function'] -%}
+            {%- endif -%}
+            {{ '<tool_call>\n' }}{{ tool_call | tojson }}{{ '\n</tool_call>' }}
+            {%- if not loop.last -%}
+                {{ '\n' }}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+    {%- if message['role'] == 'tool' -%}
+        {{ '\n</tool_response>' }}
         {%- if loop.last or messages[loop.index0 + 1]['role'] != 'tool' -%}
             {{ '<|im_end|>\n' }}
         {%- endif -%}
-    {# Skip the first system message as it was already rendered. #}
-    {%- elif not loop.first or message['role'] != 'system' -%}
-        {{ '<|im_start|>' ~ message['role'] ~ '\n' }}
-        {%- if message['content'] is string -%}
-            {{ message['content'] }}
-        {%- else -%}
-            {%- for content in message['content'] -%}
-                {%- if content['type'] == 'image' or 'image' in content or 'image_url' in content -%}
-                    {%- set image_count.value = image_count.value + 1 -%}
-                    {%- if add_vision_id -%}
-                        {{ 'Picture ' ~ image_count.value ~ ': ' }}
-                    {%- endif -%}
-                    {{ '<|vision_start|><|image_pad|><|vision_end|>' }}
-                {%- elif content['type'] == 'video' or 'video' in content -%}
-                    {%- set video_count.value = video_count.value + 1 -%}
-                    {%- if add_vision_id -%}
-                        {{ 'Video ' ~ video_count.value ~ ': ' }}
-                    {%- endif -%}
-                    {{ '<|vision_start|><|video_pad|><|vision_end|>' }}
-                {%- elif 'text' in content -%}
-                    {{ content['text'] }}
-                {%- endif -%}
-            {%- endfor -%}
-        {%- endif -%}
-        {# Render tool_calls in AI messages. #}
-        {%- if message['role'] == 'assistant' and 'tool_calls' in message -%}
-            {# It will be cleaner if I can use some map function and join them with '\n' #}
-            {%- for tool_call in message['tool_calls'] -%}
-                {%- if tool_call['function'] is defined -%}
-                    {%- set tool_call = tool_call['function'] -%}
-                {%- endif -%}
-                {{ '<tool_call>\n' }}{{ tool_call | tojson }}{{ '\n</tool_call>' }}
-                {%- if not loop.last -%}
-                    {{ '\n' }}
-                {%- endif -%}
-            {%- endfor -%}
-        {%- endif -%}
+    {%- else -%}
         {{ '<|im_end|>\n' }}
     {%- endif -%}
 {%- endfor -%}
